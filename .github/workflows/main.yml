@@ -10,16 +10,16 @@ jobs:
     name: Test And Deploy
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
       - name: Cypress run
-        uses: cypress-io/github-action@v2
+        uses: cypress-io/github-action@v6
         with:
           start: npm run develop
           wait-on-timeout: 400
@@ -33,7 +33,7 @@ jobs:
           publish_dir: ./public
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Archive videos
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-test-records
           path: cypress/videos
