@@ -11,6 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Explicitly use Node.js 20
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -20,11 +24,15 @@ jobs:
             ${{ runner.os }}-node-
       - name: Cypress run
         uses: cypress-io/github-action@v6
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider # Enable legacy OpenSSL algorithms
         with:
           start: npm run develop
           wait-on-timeout: 400
           wait-on: 'http://localhost:8000'
       - name: Build site
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider # Apply to build step as well
         run: npm run build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
