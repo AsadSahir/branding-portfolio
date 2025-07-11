@@ -19,23 +19,27 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', 'plugins/gatsby-plugin-social-banners/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
       - name: Clear npm cache
         run: npm cache clean --force
-      - name: Install dependencies
-        run: npm ci || npm install # Try npm ci, fallback to npm install if it fails
+      - name: Install root dependencies
+        run: npm ci || npm install
       - name: Install plugin dependencies
         run: |
-          if [ -d "plugins/gatsby-plugin-social-banners" ]; then
+          if [ -d "plugins/gatsby-plugin-social-banners" ] && [ -f "plugins/gatsby-plugin-social-banners/package.json" ]; then
             cd plugins/gatsby-plugin-social-banners && npm ci || npm install
           else
-            echo "Plugin directory not found, skipping plugin install"
+            echo "Plugin directory or package.json not found, skipping plugin install"
           fi
       - name: Debug npm ci failure
         if: failure()
-        run: cat /home/runner/.npm/_logs/*.log || echo "No log file found"
+        run: |
+          cat /home/runner/.npm/_logs/*.log || echo "No npm log file found"
+          if [ -f "plugins/gatsby-plugin-social-banners/package.json" ]; then
+            cat plugins/gatsby-plugin-social-banners/package.json
+          fi
       - name: Cypress run
         uses: cypress-io/github-action@v6
         env:
