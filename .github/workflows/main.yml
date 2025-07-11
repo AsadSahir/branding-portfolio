@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Explicitly use Node.js 20
+          node-version: '20' # Use Node.js 20
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -22,17 +22,31 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Install dependencies
+        run: npm ci || npm install # Try npm ci, fallback to npm install if it fails
+      - name: Install plugin dependencies
+        run: |
+          if [ -d "plugins/gatsby-plugin-social-banners" ]; then
+            cd plugins/gatsby-plugin-social-banners && npm ci || npm install
+          else
+            echo "Plugin directory not found, skipping plugin install"
+          fi
+      - name: Debug npm ci failure
+        if: failure()
+        run: cat /home/runner/.npm/_logs/*.log || echo "No log file found"
       - name: Cypress run
         uses: cypress-io/github-action@v6
         env:
-          NODE_OPTIONS: --openssl-legacy-provider # Enable legacy OpenSSL algorithms
+          NODE_OPTIONS: --openssl-legacy-provider # Fix for OpenSSL error
         with:
           start: npm run develop
           wait-on-timeout: 400
           wait-on: 'http://localhost:8000'
       - name: Build site
         env:
-          NODE_OPTIONS: --openssl-legacy-provider # Apply to build step as well
+          NODE_OPTIONS: --openssl-legacy-provider # Apply to build step
         run: npm run build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
